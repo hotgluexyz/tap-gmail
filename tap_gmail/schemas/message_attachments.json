@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "attachmentId": {
+      "type": "string"
+    },
+    "size": {
+      "type": "number"
+    },
+    "data": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "message_id": {
+      "type": "string"
+    }
+
+  }
+}
