@@ -18,6 +18,7 @@ class GmailStream(RESTStream):
 
     url_base = "https://gmail.googleapis.com"
 
+    
     @property
     @cached
     def authenticator(self) -> GmailAuthenticator:
@@ -30,6 +31,8 @@ class GmailStream(RESTStream):
         headers = {}
         if "user_agent" in self.config:
             headers["User-Agent"] = self.config.get("user_agent")
+        #For debug
+        # headers['Authorization'] = f"Bearer {self.config.get('access_token')}"
         return headers
 
     def get_next_page_token(

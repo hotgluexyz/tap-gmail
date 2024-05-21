@@ -5,9 +5,9 @@ from typing import List
 from singer_sdk import Stream, Tap
 from singer_sdk import typing as th  # JSON schema typing helpers
 
-from tap_gmail.streams import GmailStream, MessageListStream, MessagesStream
+from tap_gmail.streams import GmailStream, MessageListStream, MessagesStream, MessageAttachmentsStream
 
-STREAM_TYPES = [MessageListStream, MessagesStream]
+STREAM_TYPES = [MessageListStream, MessagesStream,MessageAttachmentsStream]
 
 
 class TapGmail(Tap):
@@ -47,3 +47,6 @@ class TapGmail(Tap):
     def discover_streams(self) -> List[Stream]:
         """Return a list of discovered streams."""
         return [stream_class(tap=self) for stream_class in STREAM_TYPES]
+
+if __name__ == '__main__':
+    TapGmail.cli()    
