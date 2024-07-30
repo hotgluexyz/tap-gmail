@@ -16,17 +16,17 @@ class TapGmail(Tap):
     name = "tap-gmail"
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "oauth_credentials.client_id",
+            "client_id",
             th.StringType,
             description="Your google client_id",
         ),
         th.Property(
-            "oauth_credentials.client_secret",
+            "client_secret",
             th.StringType,
             description="Your google client_secret",
         ),
         th.Property(
-            "oauth_credentials.refresh_token",
+            "refresh_token",
             th.StringType,
             description="Your google refresh token",
         ),
