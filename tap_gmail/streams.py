@@ -69,7 +69,7 @@ class MessagesStream(GmailStream):
     def path(self):
         """Set the path for the stream."""
         return "/gmail/v1/users/" + self.config["user_id"] + "/messages/{message_id}"
-    def get_child_context(self, record: Dict, context: Dict | None) -> Dict:
+    def get_child_context(self, record, context) -> Dict:
         attachment_ids = self.find_attachment_ids(record['payload'])
         return {"message_id": record["id"],"attachment_ids": attachment_ids}
 class MessageAttachmentsStream(GmailStream):
@@ -102,7 +102,7 @@ class MessageAttachmentsStream(GmailStream):
         """Set the path for the stream."""
         return "/gmail/v1/users/" + self.config["user_id"] + "/messages/{message_id}/attachments/"+self.attachment_id
 
-    def post_process(self, row: Dict, context: Dict | None = None) -> Dict | None:
+    def post_process(self, row, context = None):
         #download the file
         if 'data' in row:
             #Decode the base64 data
