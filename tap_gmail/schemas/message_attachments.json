@@ -2,13 +2,13 @@
   "type": "object",
   "properties": {
     "attachmentId": {
-      "type": "string"
+      "type": ["string","null"]
     },
     "size": {
       "type": "number"
     },
     "data": {
-      "type": "string"
+      "type": ["string","null"]
     },
     "filename": {
       "type": "string"
