@@ -36,7 +36,7 @@
       "description": "Estimated size in bytes of the message."
     },
     "raw": {
-      "type": "string",
+      "type": ["string","null"],
       "description": "The entire email message in an RFC 2822 formatted and base64url encoded string. Returned in messages.get and drafts.get responses when the format=RAW parameter is supplied. A base64-encoded string."
     }
   }
