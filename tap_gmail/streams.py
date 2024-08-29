@@ -85,6 +85,8 @@ class MessageAttachmentsStream(GmailStream):
 
     def save_attachment_to_file(self,decoded_data, file_path):
         # Write the decoded data to a file
+        if self.hg_sync_output_folder:
+            file_path = self.hg_sync_output_folder + "/" + file_path
         with open(file_path, 'wb') as file:
             file.write(decoded_data)
     
