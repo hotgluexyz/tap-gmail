@@ -26,6 +26,11 @@ class GmailStream(RESTStream):
         return GmailAuthenticator.create_for_stream(self)
 
     @property
+    def hg_sync_output_folder(self) -> str:
+        """Return the sync output folder, if it exists"""
+        return self.config.get("hg_sync_output")
+
+    @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
         headers = {}
