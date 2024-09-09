@@ -114,6 +114,7 @@ class MessageAttachmentsStream(GmailStream):
             #Avoid populating the data field to keep the singer output clean
             del row['data']
             #Reference fields so we could match on them
+            row['attachmentId'] = self.attachment_id
             row['filename'] = file_name
             row['message_id'] = context.get('message_id')
         return row
