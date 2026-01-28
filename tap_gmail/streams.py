@@ -24,7 +24,7 @@ class MessageListStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + (self.config.get("user_id") or "me") + "/messages"
+        return "/gmail/v1/users/" + self.config.get("user_id", "me") + "/messages"
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
@@ -68,7 +68,7 @@ class MessagesStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + (self.config.get("user_id") or "me") + "/messages/{message_id}"
+        return "/gmail/v1/users/" + self.config.get("user_id", "me") + "/messages/{message_id}"
     def get_child_context(self, record, context) -> Dict:
         attachment_ids = self.find_attachment_ids(record['payload'])
         return {"message_id": record["id"],"attachment_ids": attachment_ids}
@@ -102,7 +102,7 @@ class MessageAttachmentsStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + (self.config.get("user_id") or "me") + "/messages/{message_id}/attachments/"+self.attachment_id
+        return "/gmail/v1/users/" + self.config.get("user_id", "me") + "/messages/{message_id}/attachments/"+self.attachment_id
 
     def post_process(self, row, context = None):
         #download the file
