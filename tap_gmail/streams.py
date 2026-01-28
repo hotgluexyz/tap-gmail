@@ -1,13 +1,11 @@
 """Stream type classes for tap-gmail."""
 
-from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
-
-from requests import Response
 
 from tap_gmail.client import GmailStream
 
-SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
+from hotglue_singer_sdk import typing as th
+
 import base64  # noqa: E402
 from datetime import datetime, timezone
 
@@ -18,9 +16,13 @@ class MessageListStream(GmailStream):
     name = "message_list"
     primary_keys = ["id"]
     replication_key = None
-    schema_filepath = SCHEMAS_DIR / "message_list.json"
     records_jsonpath = "$.messages[*]"
     next_page_token_jsonpath = "$.nextPageToken"
+
+    schema = th.PropertiesList(
+        th.Property("id", th.StringType),
+        th.Property("threadId", th.StringType),
+    ).to_dict()
 
     @property
     def path(self):
@@ -36,6 +38,7 @@ class MessageListStream(GmailStream):
     ) -> Dict[str, Any]:
         params = super().get_url_params(context, next_page_token)
         params["includeSpamTrash"]=self.config["messages.include_spam_trash"]
+        params["format"]="full"
         start_date = self.get_starting_time(context)
         if start_date:
             params["q"]="after:"+str(int(start_date.timestamp()))
@@ -46,10 +49,21 @@ class MessagesStream(GmailStream):
 
     name = "messages"
     replication_key = None
-    schema_filepath = SCHEMAS_DIR / "messages.json"
     parent_stream_type = MessageListStream
     ignore_parent_replication_keys = True
     state_partitioning_keys = []
+
+    schema = th.PropertiesList(
+        th.Property("id", th.StringType),
+        th.Property("threadId", th.StringType),
+        th.Property("labelIds", th.ArrayType(th.StringType)),
+        th.Property("snippet", th.StringType),
+        th.Property("historyId", th.StringType),
+        th.Property("internalDate", th.StringType),
+        th.Property("payload", th.CustomType({"type": ["object", "string"]})),
+        th.Property("sizeEstimate", th.IntegerType),
+        th.Property("raw", th.StringType),
+    ).to_dict()
     
     def find_attachment_ids(self,payload):
         attachments = []
@@ -77,17 +91,32 @@ class MessagesStream(GmailStream):
         attachment_ids = self.find_attachment_ids(record['payload'])
         return {"message_id": record["id"],"attachment_ids": attachment_ids}
 
-        
+    def post_process(self, row, context = None):
+        #download the file
+        if 'payload' in row and 'body' in row['payload'] and 'data' in row['payload']['body']:
+            #Decode the base64 data
+            decoded_data = base64.urlsafe_b64decode(row['payload']['body']['data'])
+            row['payload']['body']['data'] = decoded_data
+        return row
+
+
 class MessageAttachmentsStream(GmailStream):
 
     name = "message_attachments"
     replication_key = None
-    schema_filepath = SCHEMAS_DIR / "message_attachments.json"
     parent_stream_type = MessagesStream
     ignore_parent_replication_keys = True
     state_partitioning_keys = []
     attachment_id = None
     file_name = None
+
+    schema = th.PropertiesList(
+        th.Property("attachmentId", th.StringType),
+        th.Property("size", th.NumberType),
+        th.Property("data", th.StringType),
+        th.Property("filename", th.StringType),
+        th.Property("message_id", th.StringType),
+    ).to_dict()
 
     def save_attachment_to_file(self,decoded_data, file_path):
         # Write the decoded data to a file
