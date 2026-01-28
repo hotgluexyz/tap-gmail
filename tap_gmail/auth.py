@@ -1,7 +1,7 @@
 """Gmail Authentication."""
 
 
-from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
+from hotglue_singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
 
 
 # The SingletonMeta metaclass makes your streams reuse the same authenticator instance.
