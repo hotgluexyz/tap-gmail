@@ -16,8 +16,9 @@ SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 class GmailStream(RESTStream):
     """Gmail stream class."""
 
-    url_base = "https://gmail.googleapis.com"
-
+    @property
+    def url_base(self) -> str:
+        return "https://gmail.googleapis.com/gmail/v1/users/" + self.config.get("user_id", "me")
     
     @property
     @cached

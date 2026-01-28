@@ -9,6 +9,7 @@ from tap_gmail.client import GmailStream
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 import base64  # noqa: E402
+from datetime import datetime, timezone
 
 
 class MessageListStream(GmailStream):
@@ -24,7 +25,7 @@ class MessageListStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + self.config.get("user_id", "me") + "/messages"
+        return "/messages"
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
@@ -35,7 +36,9 @@ class MessageListStream(GmailStream):
     ) -> Dict[str, Any]:
         params = super().get_url_params(context, next_page_token)
         params["includeSpamTrash"]=self.config["messages.include_spam_trash"]
-        params["q"]=self.config.get("messages.q")
+        start_date = self.get_starting_time(context)
+        if start_date:
+            params["q"]="after:"+str(int(start_date.timestamp()))
         return params
 
 
@@ -68,10 +71,13 @@ class MessagesStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + self.config.get("user_id", "me") + "/messages/{message_id}"
+        return "/messages/{message_id}"
+
     def get_child_context(self, record, context) -> Dict:
         attachment_ids = self.find_attachment_ids(record['payload'])
         return {"message_id": record["id"],"attachment_ids": attachment_ids}
+
+        
 class MessageAttachmentsStream(GmailStream):
 
     name = "message_attachments"
@@ -102,7 +108,7 @@ class MessageAttachmentsStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + self.config.get("user_id", "me") + "/messages/{message_id}/attachments/"+self.attachment_id
+        return "/messages/{message_id}/attachments/"+self.attachment_id
 
     def post_process(self, row, context = None):
         #download the file
