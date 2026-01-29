@@ -8,6 +8,8 @@ from memoization import cached
 from hotglue_singer_sdk.helpers.jsonpath import extract_jsonpath
 from hotglue_singer_sdk.streams import RESTStream
 
+from datetime import datetime, timezone
+
 from tap_gmail.auth import GmailAuthenticator
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
@@ -15,6 +17,10 @@ SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
 class GmailStream(RESTStream):
     """Gmail stream class."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sync_start_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
     @property
     def url_base(self) -> str:

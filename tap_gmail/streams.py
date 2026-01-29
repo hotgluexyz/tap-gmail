@@ -15,13 +15,14 @@ class MessageListStream(GmailStream):
 
     name = "message_list"
     primary_keys = ["id"]
-    replication_key = None
+    replication_key = "hg_synced_at"
     records_jsonpath = "$.messages[*]"
     next_page_token_jsonpath = "$.nextPageToken"
 
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
         th.Property("threadId", th.StringType),
+        th.Property("hg_synced_at", th.DateTimeType),
     ).to_dict()
 
     @property
@@ -43,6 +44,10 @@ class MessageListStream(GmailStream):
         if start_date:
             params["q"]="after:"+str(int(start_date.timestamp()))
         return params
+
+    def post_process(self, row, context = None):
+        row["hg_synced_at"] = self.sync_start_time
+        return row
 
 
 class MessagesStream(GmailStream):
