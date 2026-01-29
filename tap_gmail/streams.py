@@ -39,7 +39,6 @@ class MessageListStream(GmailStream):
     ) -> Dict[str, Any]:
         params = super().get_url_params(context, next_page_token)
         params["includeSpamTrash"]=self.config["messages.include_spam_trash"]
-        params["format"]="full"
         start_date = self.get_starting_time(context)
         if start_date:
             params["q"]="after:"+str(int(start_date.timestamp()))
@@ -57,7 +56,7 @@ class MessagesStream(GmailStream):
     parent_stream_type = MessageListStream
     ignore_parent_replication_keys = True
     state_partitioning_keys = []
-    parallelization_limit = 20
+    parallelization_limit = 25
 
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -104,6 +103,11 @@ class MessagesStream(GmailStream):
             decoded_data = base64.urlsafe_b64decode(row['payload']['body']['data'])
             row['payload']['body']['data'] = decoded_data
         return row
+
+    def get_url_params(self, context, next_page_token):
+        params = super().get_url_params(context, next_page_token)
+        params["format"]="full"
+        return params
 
 
 class MessageAttachmentsStream(GmailStream):
