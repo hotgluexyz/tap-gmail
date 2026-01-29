@@ -7,7 +7,6 @@ from tap_gmail.client import GmailStream
 from hotglue_singer_sdk import typing as th
 
 import base64  # noqa: E402
-from datetime import datetime, timezone
 
 
 class MessageListStream(GmailStream):
