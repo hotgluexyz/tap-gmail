@@ -2,8 +2,8 @@
 
 from typing import List
 
-from singer_sdk import Stream, Tap
-from singer_sdk import typing as th  # JSON schema typing helpers
+from hotglue_singer_sdk import Stream, Tap
+from hotglue_singer_sdk import typing as th  # JSON schema typing helpers
 
 from tap_gmail.streams import GmailStream, MessageListStream, MessagesStream, MessageAttachmentsStream
 
@@ -29,11 +29,6 @@ class TapGmail(Tap):
             "refresh_token",
             th.StringType,
             description="Your google refresh token",
-        ),
-        th.Property(
-            "messages.q",
-            th.StringType,
-            description="Only return messages matching the specified query. Supports the same query format as the Gmail search box. For example, \"from:someuser@example.com rfc822msgid:<somemsgid@example.com> is:unread\". Parameter cannot be used when accessing the api using the gmail.metadata scope. https://developers.google.com/gmail/api/reference/rest/v1/users.messages/list#query-parameters",
         ),
         th.Property("user_id", th.StringType, description="Your Gmail User ID"),
         th.Property(

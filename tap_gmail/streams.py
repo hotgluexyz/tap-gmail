@@ -1,13 +1,11 @@
 """Stream type classes for tap-gmail."""
 
-from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
-
-from requests import Response
 
 from tap_gmail.client import GmailStream
 
-SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
+from hotglue_singer_sdk import typing as th
+
 import base64  # noqa: E402
 
 
@@ -16,15 +14,20 @@ class MessageListStream(GmailStream):
 
     name = "message_list"
     primary_keys = ["id"]
-    replication_key = None
-    schema_filepath = SCHEMAS_DIR / "message_list.json"
+    replication_key = "hg_synced_at"
     records_jsonpath = "$.messages[*]"
     next_page_token_jsonpath = "$.nextPageToken"
+
+    schema = th.PropertiesList(
+        th.Property("id", th.StringType),
+        th.Property("threadId", th.StringType),
+        th.Property("hg_synced_at", th.DateTimeType),
+    ).to_dict()
 
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + self.config["user_id"] + "/messages"
+        return "/messages"
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
@@ -35,18 +38,36 @@ class MessageListStream(GmailStream):
     ) -> Dict[str, Any]:
         params = super().get_url_params(context, next_page_token)
         params["includeSpamTrash"]=self.config["messages.include_spam_trash"]
-        params["q"]=self.config.get("messages.q")
+        start_date = self.get_starting_time(context)
+        if start_date:
+            params["q"]="after:"+str(int(start_date.timestamp()))
         return params
+
+    def post_process(self, row, context = None):
+        row["hg_synced_at"] = self.sync_start_time
+        return row
 
 
 class MessagesStream(GmailStream):
 
     name = "messages"
     replication_key = None
-    schema_filepath = SCHEMAS_DIR / "messages.json"
     parent_stream_type = MessageListStream
     ignore_parent_replication_keys = True
     state_partitioning_keys = []
+    parallelization_limit = 25
+
+    schema = th.PropertiesList(
+        th.Property("id", th.StringType),
+        th.Property("threadId", th.StringType),
+        th.Property("labelIds", th.ArrayType(th.StringType)),
+        th.Property("snippet", th.StringType),
+        th.Property("historyId", th.StringType),
+        th.Property("internalDate", th.StringType),
+        th.Property("payload", th.CustomType({"type": ["object", "string"]})),
+        th.Property("sizeEstimate", th.IntegerType),
+        th.Property("raw", th.StringType),
+    ).to_dict()
     
     def find_attachment_ids(self,payload):
         attachments = []
@@ -68,20 +89,43 @@ class MessagesStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + self.config["user_id"] + "/messages/{message_id}"
+        return "/messages/{message_id}"
+
     def get_child_context(self, record, context) -> Dict:
         attachment_ids = self.find_attachment_ids(record['payload'])
         return {"message_id": record["id"],"attachment_ids": attachment_ids}
+
+    def post_process(self, row, context = None):
+        #download the file
+        if row.get("payload", {}).get("body", {}).get("data"):
+            #Decode the base64 data
+            decoded_data = base64.urlsafe_b64decode(row['payload']['body']['data'])
+            row['payload']['body']['data'] = decoded_data
+        return row
+
+    def get_url_params(self, context, next_page_token):
+        params = super().get_url_params(context, next_page_token)
+        params["format"]="full"
+        return params
+
+
 class MessageAttachmentsStream(GmailStream):
 
     name = "message_attachments"
     replication_key = None
-    schema_filepath = SCHEMAS_DIR / "message_attachments.json"
     parent_stream_type = MessagesStream
     ignore_parent_replication_keys = True
     state_partitioning_keys = []
     attachment_id = None
     file_name = None
+
+    schema = th.PropertiesList(
+        th.Property("attachmentId", th.StringType),
+        th.Property("size", th.NumberType),
+        th.Property("data", th.StringType),
+        th.Property("filename", th.StringType),
+        th.Property("message_id", th.StringType),
+    ).to_dict()
 
     def save_attachment_to_file(self,decoded_data, file_path):
         # Write the decoded data to a file
@@ -102,7 +146,7 @@ class MessageAttachmentsStream(GmailStream):
     @property
     def path(self):
         """Set the path for the stream."""
-        return "/gmail/v1/users/" + self.config["user_id"] + "/messages/{message_id}/attachments/"+self.attachment_id
+        return "/messages/{message_id}/attachments/"+self.attachment_id
 
     def post_process(self, row, context = None):
         #download the file

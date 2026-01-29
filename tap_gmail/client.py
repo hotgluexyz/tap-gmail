@@ -5,19 +5,26 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 
 import requests
 from memoization import cached
-from singer_sdk.helpers.jsonpath import extract_jsonpath
-from singer_sdk.streams import RESTStream
+from hotglue_singer_sdk.helpers.jsonpath import extract_jsonpath
+from hotglue_singer_sdk.streams import RESTStream
+
+from datetime import datetime, timezone
 
 from tap_gmail.auth import GmailAuthenticator
 
-SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
+
 
 
 class GmailStream(RESTStream):
     """Gmail stream class."""
 
-    url_base = "https://gmail.googleapis.com"
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sync_start_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+    @property
+    def url_base(self) -> str:
+        return "https://gmail.googleapis.com/gmail/v1/users/" + self.config.get("user_id", "me")
     
     @property
     @cached

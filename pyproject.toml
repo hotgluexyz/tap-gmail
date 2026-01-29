@@ -17,7 +17,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "<3.12,>=3.7.1"
 requests = "^2.25.1"
-singer-sdk = "^0.24.0"
+hotglue-singer-sdk = "^1.0.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
