@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 
 from tap_gmail.auth import GmailAuthenticator
 
-SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
+
 
 
 class GmailStream(RESTStream):
