@@ -57,6 +57,7 @@ class MessagesStream(GmailStream):
     parent_stream_type = MessageListStream
     ignore_parent_replication_keys = True
     state_partitioning_keys = []
+    parallelization_limit = 20
 
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -98,7 +99,7 @@ class MessagesStream(GmailStream):
 
     def post_process(self, row, context = None):
         #download the file
-        if 'payload' in row and 'body' in row['payload'] and 'data' in row['payload']['body']:
+        if row.get("payload", {}).get("body", {}).get("data"):
             #Decode the base64 data
             decoded_data = base64.urlsafe_b64decode(row['payload']['body']['data'])
             row['payload']['body']['data'] = decoded_data
