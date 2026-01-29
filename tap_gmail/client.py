@@ -74,3 +74,7 @@ class GmailStream(RESTStream):
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
         yield from extract_jsonpath(self.records_jsonpath, input=response.json())
+
+    
+    def _get_state_partition_context(self, context):
+        return None

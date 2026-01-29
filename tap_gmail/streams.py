@@ -53,9 +53,9 @@ class MessagesStream(GmailStream):
     name = "messages"
     replication_key = None
     parent_stream_type = MessageListStream
-    ignore_parent_replication_keys = True
-    state_partitioning_keys = []
     parallelization_limit = 25
+
+
 
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -114,10 +114,9 @@ class MessageAttachmentsStream(GmailStream):
     name = "message_attachments"
     replication_key = None
     parent_stream_type = MessagesStream
-    ignore_parent_replication_keys = True
-    state_partitioning_keys = []
     attachment_id = None
     file_name = None
+
 
     schema = th.PropertiesList(
         th.Property("attachmentId", th.StringType),
