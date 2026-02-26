@@ -4,6 +4,7 @@ from typing import List
 
 from hotglue_singer_sdk import Stream, Tap
 from hotglue_singer_sdk import typing as th  # JSON schema typing helpers
+from tap_gmail.auth import GmailAuthenticator
 
 from tap_gmail.streams import GmailStream, MessageListStream, MessagesStream, MessageAttachmentsStream
 
@@ -38,6 +39,13 @@ class TapGmail(Tap):
             default=False,
         ),
     ).to_dict()
+
+    @classmethod
+    def access_token_support(cls, connector=None):
+        """Return authenticator class and auth endpoint for token refresh."""
+        authenticator = GmailAuthenticator
+        auth_endpoint = "https://oauth2.googleapis.com/token"
+        return authenticator, auth_endpoint
 
     def discover_streams(self) -> List[Stream]:
         """Return a list of discovered streams."""
